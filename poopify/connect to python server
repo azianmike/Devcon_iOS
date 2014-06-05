@@ -1,0 +1,23 @@
+// Conect to the server
+    CFReadStreamRef readStream;
+    CFWriteStreamRef writeStream;
+    CFStringRef remoteHost = CFSTR("ec2-54-201-41-167.us-west-2.compute.amazonaws.com");
+    CFStreamCreatePairWithSocketToHost(NULL, remoteHost, 5687, &readStream, &writeStream);
+    CFWriteStreamOpen(writeStream);
+    CFReadStreamOpen(readStream);
+    
+    // fake login
+    NSMutableDictionary * tempData = [[NSMutableDictionary alloc]init];
+    [tempData setObject:@"getLocation" forKey:@"function"];
+    [tempData setObject:@"40.113797" forKey:@"latitude"];
+    [tempData setObject:@"-88.224884" forKey:@"longitude"];
+    NSData * temp = [NSJSONSerialization dataWithJSONObject:tempData options:0 error:nil];
+    NSString *myString = [[NSString alloc] initWithData:temp encoding:NSUTF8StringEncoding];
+    CFWriteStreamWrite(writeStream, (const UInt8 *)[myString UTF8String], [myString lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+    
+    // get the return data
+    UInt8 readData[10000];
+    int blah = CFReadStreamRead(readStream, readData, 10000);
+    NSData *t = [[NSData alloc]initWithBytes:readData length:blah];
+    NSLog([NSString stringWithFormat:@"Read Data: size: %d", blah]);
+    NSLog([[NSString alloc] initWithData:t encoding:NSUTF8StringEncoding]);
